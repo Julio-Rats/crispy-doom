@@ -87,6 +87,7 @@ static const bex_string_t bex_stringtable[] = {
     {"GOTROCKBOX", GOTROCKBOX},
     {"GOTCELL", GOTCELL},
     {"GOTCELLBOX", GOTCELLBOX},
+    {"GOTSHELLSDB", GOTSHELLSDB},
     {"GOTSHELLS", GOTSHELLS},
     {"GOTSHELLBOX", GOTSHELLBOX},
     {"GOTBACKPACK", GOTBACKPACK},

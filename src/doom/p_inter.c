@@ -624,7 +624,8 @@ P_TouchSpecialThing
       case SPR_SHEL:
 	if (!P_GiveAmmo (player, am_shell,1,dropped))
 	    return;
-	player->message = DEH_String(GOTSHELLS);
+	player->message = (gameskill == sk_nightmare || gameskill == sk_baby) ?
+					  DEH_String(GOTSHELLSDB) : DEH_String(GOTSHELLS);
 	break;
 	
       case SPR_SBOX:
