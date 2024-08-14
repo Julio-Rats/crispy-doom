@@ -1,4 +1,4 @@
-AC_INIT(Crispy Doom, 6.0.0,
+AC_INIT(Crispy Doom, 7.0.0,
         fabian@greffrath.com, crispy-doom)
 
 PACKAGE_SHORTNAME=${PACKAGE_NAME% Doom}
@@ -34,9 +34,13 @@ fi
 AC_CANONICAL_TARGET
 TARGET_OS=""
 AS_CASE([$target_cpu],
-        [x86_64|aarch64*],
+        [x86_64],
         [
-            TARGET_OS="64"
+            TARGET_OS="x64"
+        ],
+        [aarch64*|arm*],
+        [
+            TARGET_OS="arm"
         ],
         [i?86|arm*],
         [

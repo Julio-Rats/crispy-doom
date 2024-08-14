@@ -600,10 +600,10 @@ void R_ProjectSprite (mobj_t* thing)
         // Don't interpolate during a paused state.
         leveltime > oldleveltime)
     {
-        interpx = thing->oldx + FixedMul(thing->x - thing->oldx, fractionaltic);
-        interpy = thing->oldy + FixedMul(thing->y - thing->oldy, fractionaltic);
-        interpz = thing->oldz + FixedMul(thing->z - thing->oldz, fractionaltic);
-        interpangle = R_InterpolateAngle(thing->oldangle, thing->angle, fractionaltic);
+        interpx = LerpFixed(thing->oldx, thing->x);
+        interpy = LerpFixed(thing->oldy, thing->y);
+        interpz = LerpFixed(thing->oldz, thing->z);
+        interpangle = LerpAngle(thing->oldangle, thing->angle);
     }
     else
     {
@@ -1029,7 +1029,7 @@ void R_DrawPSprite (pspdef_t* psp, psprnum_t psprnum) // [crispy] differentiate 
     vis->translation = NULL; // [crispy] no color translation
     vis->mobjflags = 0;
     // [crispy] weapons drawn 1 pixel too high when player is idle
-    vis->texturemid = (BASEYCENTER<<FRACBITS)+FRACUNIT/4-(psp->sy2-spritetopoffset[lump]);
+    vis->texturemid = (BASEYCENTER<<FRACBITS)+FRACUNIT/(2<<crispy->hires)-(psp->sy2-spritetopoffset[lump]);
     vis->x1 = x1 < 0 ? 0 : x1;
     vis->x2 = x2 >= viewwidth ? viewwidth-1 : x2;	
     vis->scale = pspritescale<<detailshift;
@@ -1104,10 +1104,10 @@ void R_DrawPSprite (pspdef_t* psp, psprnum_t psprnum) // [crispy] differentiate 
         if (lump == oldlump && pspr_interp)
         {
             int deltax = vis->x2 - vis->x1;
-            vis->x1 = oldx1 + FixedMul(vis->x1 - oldx1, fractionaltic);
+            vis->x1 = LerpFixed(oldx1, vis->x1);
             vis->x2 = vis->x1 + deltax;
             vis->x2 = vis->x2 >= viewwidth ? viewwidth - 1 : vis->x2;
-            vis->texturemid = oldtexturemid + FixedMul(vis->texturemid - oldtexturemid, fractionaltic);
+            vis->texturemid = LerpFixed(oldtexturemid, vis->texturemid);
         }
         else
         {
