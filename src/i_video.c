@@ -87,8 +87,6 @@ static SDL_Rect blit_rect = {
 };
 #endif
 
-static uint32_t pixel_format;
-
 // palette
 
 #ifdef CRISPY_TRUECOLOR
@@ -102,7 +100,6 @@ static SDL_Texture *bluepane = NULL;
 static SDL_Texture *graypane = NULL;
 static SDL_Texture *orngpane = NULL;
 static int pane_alpha;
-static unsigned int rmask, gmask, bmask, amask; // [crispy] moved up here
 extern pixel_t* pal_color; // [crispy] evil hack to get FPS dots working as in Vanilla
 #else
 static SDL_Color palette[256];
@@ -733,7 +730,7 @@ static void CreateUpscaledTexture(boolean force)
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
 
     new_texture = SDL_CreateTexture(renderer,
-                                pixel_format,
+                                SDL_PIXELFORMAT_ARGB8888,
                                 SDL_TEXTUREACCESS_TARGET,
                                 w_upscale*SCREENWIDTH,
                                 h_upscale*SCREENHEIGHT);
@@ -866,14 +863,16 @@ void I_FinishUpdate (void)
     }
 
     // Blit from the paletted 8-bit screen buffer to the intermediate
-    // 32-bit RGBA buffer that we can load into the texture.
+    // 32-bit RGBA buffer and update the intermediate texture with the
+    // contents of the RGBA buffer.
 
+    SDL_LockTexture(texture, &blit_rect, &argbbuffer->pixels,
+                    &argbbuffer->pitch);
     SDL_LowerBlit(screenbuffer, &blit_rect, argbbuffer, &blit_rect);
-#endif
-
-    // Update the intermediate texture with the contents of the RGBA buffer.
-
+    SDL_UnlockTexture(texture);
+#else
     SDL_UpdateTexture(texture, NULL, argbbuffer->pixels, argbbuffer->pitch);
+#endif
 
     // Make sure the pillarboxes are kept clear each frame.
 
@@ -1005,6 +1004,7 @@ void I_SetPalette (byte *doompalette)
         // controller only supports 6 bits of accuracy.
 
         // [crispy] intermediate gamma levels
+        palette[i].a = 0xFFU;
         palette[i].r = gamma2table[crispy->gamma][*doompalette++] & ~3;
         palette[i].g = gamma2table[crispy->gamma][*doompalette++] & ~3;
         palette[i].b = gamma2table[crispy->gamma][*doompalette++] & ~3;
@@ -1456,10 +1456,6 @@ static void SetVideoMode(void)
 {
     int w, h;
     int x, y;
-#ifndef CRISPY_TRUECOLOR
-    unsigned int rmask, gmask, bmask, amask;
-#endif
-    int bpp;
     int window_flags = 0, renderer_flags = 0;
     SDL_DisplayMode mode;
 
@@ -1516,8 +1512,6 @@ static void SetVideoMode(void)
             I_Error("Error creating window for video startup: %s",
             SDL_GetError());
         }
-
-        pixel_format = SDL_GetWindowPixelFormat(screen);
 
         SDL_SetWindowMinimumSize(screen, SCREENWIDTH, actualheight);
 
@@ -1635,12 +1629,10 @@ static void SetVideoMode(void)
 
     if (argbbuffer == NULL)
     {
-        SDL_PixelFormatEnumToMasks(pixel_format, &bpp,
-                                   &rmask, &gmask, &bmask, &amask);
-        argbbuffer = SDL_CreateRGBSurface(0,
-                                          SCREENWIDTH, SCREENHEIGHT, bpp,
-                                          rmask, gmask, bmask, amask);
 #ifdef CRISPY_TRUECOLOR
+        argbbuffer = SDL_CreateRGBSurfaceWithFormat(
+                     0, SCREENWIDTH, SCREENHEIGHT, 32, SDL_PIXELFORMAT_ARGB8888);
+
         SDL_FillRect(argbbuffer, NULL, I_MapRGB(0xff, 0x0, 0x0));
         redpane = SDL_CreateTextureFromSurface(renderer, argbbuffer);
         SDL_SetTextureBlendMode(redpane, SDL_BLENDMODE_BLEND);
@@ -1668,8 +1660,12 @@ static void SetVideoMode(void)
         SDL_FillRect(argbbuffer, NULL, I_MapRGB(0x96, 0x6e, 0x0)); // 150, 110, 0
         orngpane = SDL_CreateTextureFromSurface(renderer, argbbuffer);
         SDL_SetTextureBlendMode(orngpane, SDL_BLENDMODE_BLEND);
+#else
+	    // pixels and pitch will be filled with the texture's values
+	    // in I_FinishUpdate()
+	    argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
+                     NULL, w, h, 0, 0, SDL_PIXELFORMAT_ARGB8888);
 #endif
-        SDL_FillRect(argbbuffer, NULL, 0);
     }
 
     if (texture != NULL)
@@ -1688,7 +1684,7 @@ static void SetVideoMode(void)
     // is going to change frequently.
 
     texture = SDL_CreateTexture(renderer,
-                                pixel_format,
+                                SDL_PIXELFORMAT_ARGB8888,
                                 SDL_TEXTUREACCESS_STREAMING,
                                 SCREENWIDTH, SCREENHEIGHT);
 
@@ -1898,9 +1894,6 @@ void I_ReInitGraphics (int reinit)
 	// [crispy] re-set rendering resolution and re-create framebuffers
 	if (reinit & REINIT_FRAMEBUFFERS)
 	{
-		unsigned int rmask, gmask, bmask, amask;
-		int unused_bpp;
-
 		I_GetScreenDimensions();
 
 #ifndef CRISPY_TRUECOLOR
@@ -1913,21 +1906,23 @@ void I_ReInitGraphics (int reinit)
 
 #ifndef CRISPY_TRUECOLOR
 		SDL_FreeSurface(screenbuffer);
-		screenbuffer = SDL_CreateRGBSurface(0,
-				                    SCREENWIDTH, SCREENHEIGHT, 8,
-				                    0, 0, 0, 0);
-#endif
+		screenbuffer = SDL_CreateRGBSurface(
+			0, SCREENWIDTH, SCREENHEIGHT, 8,
+			0, 0, 0, 0);
 
+		// pixels and pitch will be filled with the texture's values
+		// in I_FinishUpdate()
 		SDL_FreeSurface(argbbuffer);
-		SDL_PixelFormatEnumToMasks(pixel_format, &unused_bpp,
-		                           &rmask, &gmask, &bmask, &amask);
-		argbbuffer = SDL_CreateRGBSurface(0,
-		                                  SCREENWIDTH, SCREENHEIGHT, 32,
-		                                  rmask, gmask, bmask, amask);
-#ifndef CRISPY_TRUECOLOR
+		argbbuffer = SDL_CreateRGBSurfaceWithFormatFrom(
+			NULL, SCREENWIDTH, SCREENHEIGHT, 0, 0, SDL_PIXELFORMAT_ARGB8888);
+
 		// [crispy] re-set the framebuffer pointer
 		I_VideoBuffer = screenbuffer->pixels;
 #else
+		SDL_FreeSurface(argbbuffer);
+		argbbuffer = SDL_CreateRGBSurfaceWithFormat(
+			0, SCREENWIDTH, SCREENHEIGHT, 32, SDL_PIXELFORMAT_ARGB8888);
+
 		I_VideoBuffer = argbbuffer->pixels;
 #endif
 		V_RestoreBuffer();
@@ -1968,7 +1963,7 @@ void I_ReInitGraphics (int reinit)
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
 
 		texture = SDL_CreateTexture(renderer,
-		                            pixel_format,
+		                            SDL_PIXELFORMAT_ARGB8888,
 		                            SDL_TEXTUREACCESS_STREAMING,
 		                            SCREENWIDTH, SCREENHEIGHT);
 
@@ -2116,82 +2111,8 @@ void I_BindVideoVariables(void)
 }
 
 #ifdef CRISPY_TRUECOLOR
-const pixel_t I_BlendAdd (const pixel_t bg, const pixel_t fg)
-{
-	uint32_t r, g, b;
-
-	if ((r = (fg & rmask) + (bg & rmask)) > rmask) r = rmask;
-	if ((g = (fg & gmask) + (bg & gmask)) > gmask) g = gmask;
-	if ((b = (fg & bmask) + (bg & bmask)) > bmask) b = bmask;
-
-	return amask | r | g | b;
-}
-
-// [crispy] http://stereopsis.com/doubleblend.html
-const pixel_t I_BlendDark (const pixel_t bg, const int d)
-{
-	const uint32_t ag = (bg & 0xff00ff00) >> 8;
-	const uint32_t rb =  bg & 0x00ff00ff;
-
-	uint32_t sag = d * ag;
-	uint32_t srb = d * rb;
-
-	sag = sag & 0xff00ff00;
-	srb = (srb >> 8) & 0x00ff00ff;
-
-	return amask | sag | srb;
-}
-
-// [crispy] Main overlay blending function
-const pixel_t I_BlendOver (const pixel_t bg, const pixel_t fg, const int amount)
-{
-	const uint32_t r = ((amount * (fg & rmask) + (0xff - amount) * (bg & rmask)) >> 8) & rmask;
-	const uint32_t g = ((amount * (fg & gmask) + (0xff - amount) * (bg & gmask)) >> 8) & gmask;
-	const uint32_t b = ((amount * (fg & bmask) + (0xff - amount) * (bg & bmask)) >> 8) & bmask;
-
-	return amask | r | g | b;
-}
-
-// [crispy] TRANMAP blending emulation, used for Doom
-const pixel_t I_BlendOverTranmap (const pixel_t bg, const pixel_t fg)
-{
-	return I_BlendOver(bg, fg, 0xA8); // 168 (66% opacity)
-}
-
-// [crispy] TINTTAB blending emulation, used for Heretic and Hexen
-const pixel_t I_BlendOverTinttab (const pixel_t bg, const pixel_t fg)
-{
-	return I_BlendOver(bg, fg, 0x60); // 96 (38% opacity)
-}
-
-// [crispy] More opaque ("Alt") TINTTAB blending emulation, used for Hexen's MF_ALTSHADOW drawing
-const pixel_t I_BlendOverAltTinttab (const pixel_t bg, const pixel_t fg)
-{
-	return I_BlendOver(bg, fg, 0x8E); // 142 (56% opacity)
-}
-
-// [crispy] More opaque XLATAB blending emulation, used for Strife
-const pixel_t I_BlendOverXlatab (const pixel_t bg, const pixel_t fg)
-{
-	return I_BlendOver(bg, fg, 0xC0); // 192 (75% opacity)
-}
-
-// [crispy] Less opaque ("Alt") XLATAB blending emulation, used for Strife
-const pixel_t I_BlendOverAltXlatab (const pixel_t bg, const pixel_t fg)
-{
-	return I_BlendOver(bg, fg, 0x40); // 64 (25% opacity)
-}
-
-const pixel_t (*blendfunc) (const pixel_t fg, const pixel_t bg) = I_BlendOverTranmap;
-
 const pixel_t I_MapRGB (const uint8_t r, const uint8_t g, const uint8_t b)
 {
-/*
-	return amask |
-	        (((r * rmask) >> 8) & rmask) |
-	        (((g * gmask) >> 8) & gmask) |
-	        (((b * bmask) >> 8) & bmask);
-*/
 	return SDL_MapRGB(argbbuffer->format, r, g, b);
 }
 #endif

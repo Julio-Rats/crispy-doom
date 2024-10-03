@@ -873,8 +873,8 @@ static void M_DrawSaveLoadBottomLine(void)
     struct stat st;
     char filedate[32];
 
-    stat(P_SaveGameFile(itemOn), &st);
-
+    if (M_stat(P_SaveGameFile(itemOn), &st) == 0)
+    {
 // [FG] suppress the most useless compiler warning ever
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
@@ -885,6 +885,7 @@ static void M_DrawSaveLoadBottomLine(void)
 #pragma GCC diagnostic pop
 #endif
     M_WriteText(ORIGWIDTH/2-M_StringWidth(filedate)/2, y + 8, filedate);
+    }
   }
 
   dp_translation = NULL;
@@ -2738,7 +2739,7 @@ boolean M_Responder (event_t* ev)
         {
 	    M_StartControlPanel ();
 	    currentMenu = &SoundDef;
-	    itemOn = sfx_vol;
+	    itemOn = currentMenu->lastOn; // [crispy] remember cursor position
 	    S_StartSoundOptional(NULL, sfx_mnuopn, sfx_swtchn); // [NS] Optional menu sounds.
 	    return true;
 	}
@@ -2788,7 +2789,6 @@ boolean M_Responder (event_t* ev)
             I_SetPalette (W_CacheLumpName (DEH_String("PLAYPAL"),PU_CACHE));
 #else
             {
-		extern void R_InitColormaps (void);
 		I_SetPalette (0);
 		R_InitColormaps();
 		inhelpscreens = true;

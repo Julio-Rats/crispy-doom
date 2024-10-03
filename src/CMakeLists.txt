@@ -66,6 +66,7 @@ set(GAME_SOURCE_FILES
     i_sdlsound.c
     i_sound.c           i_sound.h
     i_timer.c           i_timer.h
+    i_truecolor.c       i_truecolor.h
     i_video.c           i_video.h
     i_videohr.c         i_videohr.h
     i_winmusic.c
@@ -109,7 +110,7 @@ set(GAME_SOURCE_FILES
 
 set(GAME_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/../")
 
-if(MSVC)
+if(WIN32)
     list(APPEND GAME_SOURCE_FILES
          "../win32/win_opendir.c" "../win32/win_opendir.h")
 
@@ -146,7 +147,7 @@ if(FluidSynth_FOUND)
     list(APPEND EXTRA_LIBS FluidSynth::libfluidsynth)
 endif()
 if(WIN32)
-	list(APPEND EXTRA_LIBS winmm)
+	list(APPEND EXTRA_LIBS winmm shlwapi)
 endif()
 
 if(WIN32)
