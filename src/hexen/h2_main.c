@@ -35,6 +35,7 @@
 #include "i_swap.h" // [crispy] SHORT()
 #include "i_system.h"
 #include "i_timer.h"
+#include "a11y.h" // [crispy] A11Y
 #include "m_argv.h"
 #include "m_config.h"
 #include "m_controls.h"
@@ -180,6 +181,12 @@ void D_BindVariables(void)
     M_BindIntVariable("messageson",             &messageson);
     M_BindIntVariable("screenblocks",           &screenblocks);
     M_BindIntVariable("snd_channels",           &snd_Channels);
+    M_BindIntVariable("a11y_sector_lighting",   &a11y_sector_lighting);
+    M_BindIntVariable("a11y_extra_lighting",    &a11y_extra_lighting);
+    M_BindIntVariable("a11y_weapon_flash",      &a11y_weapon_flash);
+    M_BindIntVariable("a11y_weapon_pspr",       &a11y_weapon_pspr);
+    M_BindIntVariable("a11y_palette_changes",   &a11y_palette_changes);
+    M_BindIntVariable("a11y_weapon_palette",    &a11y_weapon_palette);
     M_BindIntVariable("vanilla_savegame_limit", &vanilla_savegame_limit);
     M_BindIntVariable("vanilla_demo_limit",     &vanilla_demo_limit);
 
@@ -209,6 +216,7 @@ void D_BindVariables(void)
     M_BindIntVariable("crispy_mouselook",       &crispy->mouselook);
     M_BindIntVariable("crispy_playercoords",    &crispy->playercoords);
     M_BindIntVariable("crispy_soundmono",       &crispy->soundmono);
+    M_BindIntVariable("crispy_translucency",    &crispy->translucency);
 #ifdef CRISPY_TRUECOLOR
     M_BindIntVariable("crispy_truecolor",       &crispy->truecolor);
 #endif
@@ -1124,10 +1132,13 @@ static void DrawAndBlit(void)
                 AM_Drawer();
                 BorderNeedRefresh = true;
             }
+            // [crispy] check for translucent HUD
+            SB_Translucent(TRANSLUCENT_HUD && (!automapactive || crispy->automapoverlay));
             CT_Drawer();
             UpdateState |= I_FULLVIEW;
             SB_Drawer();
             CrispyDrawStats();
+            SB_Translucent(false);
             break;
         case GS_INTERMISSION:
             IN_Drawer();
@@ -1158,8 +1169,13 @@ static void DrawAndBlit(void)
         }
     }
 
+    // [crispy] check for translucent HUD
+    SB_Translucent(TRANSLUCENT_HUD && (!automapactive || crispy->automapoverlay));
+
     // Draw current message
     DrawMessage();
+
+    SB_Translucent(false);
 
     // Draw Menu
     MN_Drawer();
@@ -1308,6 +1324,7 @@ void H2_DoAdvanceDemo(void)
     advancedemo = false;
     usergame = false;           // can't save/end game here
     paused = false;
+    demoextend = false; // [crispy] at this point demos should no longer be extended (demo-reel)
     gameaction = ga_nothing;
     demosequence = (demosequence + 1) % 7;
     switch (demosequence)

@@ -37,6 +37,7 @@
 
 #include "deh_main.h" // [crispy] for demo footer
 #include "memio.h"
+#include "p_extsaveg.h" // [crispy] for extended savegame information
 
 // Macros
 
@@ -2161,8 +2162,12 @@ void G_DoLoadGame(void)
     {                           // Missing savegame termination marker
         I_Error("Bad savegame");
     }
-}
 
+    // [crispy] read more extended savegame data
+    P_ReadExtendedSaveGameData();
+
+    SV_Close();
+}
 
 /*
 ====================
@@ -2706,10 +2711,10 @@ static size_t WriteCmdLineLump(MEMFILE *stream)
     return mem_ftell(stream) - pos;
 }
 
-static void WriteFileInfo(const char *name, size_t size, MEMFILE *stream)
+static long WriteFileInfo(const char *name, size_t size, long filepos,
+                          MEMFILE *stream)
 {
     filelump_t fileinfo = { 0 };
-    static long filepos = sizeof(wadinfo_t);
 
     fileinfo.filepos = LONG(filepos);
     fileinfo.size = LONG(size);
@@ -2727,12 +2732,14 @@ static void WriteFileInfo(const char *name, size_t size, MEMFILE *stream)
     mem_fwrite(&fileinfo, 1, sizeof(fileinfo), stream);
 
     filepos += size;
+    return filepos;
 }
 
 static void G_AddDemoFooter(void)
 {
     byte *data;
     size_t size;
+    long filepos;
     char *project_string;
 
     MEMFILE *stream = mem_fopen_write();
@@ -2753,10 +2760,11 @@ static void G_AddDemoFooter(void)
     mem_fwrite(&header, 1, sizeof(header), stream);
     mem_fseek(stream, 0, MEM_SEEK_END);
 
-    WriteFileInfo("PORTNAME", strlen(project_string), stream);
-    WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), stream);
-    WriteFileInfo("CMDLINE", size, stream);
-    WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), stream);
+    filepos = sizeof(wadinfo_t);
+    filepos = WriteFileInfo("PORTNAME", strlen(project_string), filepos, stream);
+    filepos = WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), filepos, stream);
+    filepos = WriteFileInfo("CMDLINE", size, filepos, stream);
+    WriteFileInfo(NULL, strlen(DEMO_FOOTER_SEPARATOR), filepos, stream);
 
     mem_get_buf(stream, (void **)&data, &size);
 
@@ -2886,7 +2894,10 @@ void G_DoSaveGame(void)
     P_ArchiveWorld();
     P_ArchiveThinkers();
     P_ArchiveSpecials();
-    SV_Close(filename);
+    SV_WriteSaveGameEOF();
+    // [crispy] write extended savegame data
+    P_WriteExtendedSaveGameData();
+    SV_Close();
 
     gameaction = ga_nothing;
     savedescription[0] = 0;

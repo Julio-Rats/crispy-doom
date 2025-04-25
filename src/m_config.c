@@ -508,7 +508,7 @@ static default_t	doom_defaults_list[] =
     CONFIG_VARIABLE_INT(mouseb_mouselook),
 
     //!
-    // @game doom heretic hexen
+    // @game doom heretic hexen strife
     //
     // Quick 180° reverse.
     //
@@ -1213,10 +1213,16 @@ static default_t extra_defaults_list[] =
 
     //!
     // If zero, this disables weapon flashes changing the ambient light
-    // level.
+    // level and flickering of torches.
     //
 
     CONFIG_VARIABLE_INT(a11y_weapon_flash),
+
+    //!
+    // If zero, this disables weapon palette changes 
+    //
+
+    CONFIG_VARIABLE_INT(a11y_weapon_palette),
 
     //!
     // If zero, this disables rendering of weapon flashes sprites.
@@ -2251,7 +2257,7 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_KEY(key_multi_msgplayer8),
 
     //!
-    // @game doom heretic hexen
+    // @game doom heretic hexen strife
     // Quick 180° reverse.
     //
 
@@ -2583,6 +2589,14 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_INT(crispy_soundmono),
 
     //!
+    // @game heretic
+    //
+    // Level Weapon Sounds
+    //
+
+    CONFIG_VARIABLE_INT(crispy_lvlwpnsnd),
+
+    //!
     // @game doom
     //
     // Level Stats Format.
@@ -2591,7 +2605,7 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_INT(crispy_statsformat),
 
     //!
-    // @game doom heretic
+    // @game doom heretic hexen
     //
     // Enable translucency.
     //

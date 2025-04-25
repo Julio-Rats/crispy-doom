@@ -56,6 +56,7 @@ extern int NUMCOLORMAPS;      // number of diminishing
 #define LOOKDIRMIN 110 // [crispy] -110, actually
 #define LOOKDIRMAX 90
 #define LOOKDIRS (LOOKDIRMIN + 1 + LOOKDIRMAX) // [crispy] lookdir range: -110..0..90
+#define TRANSLUCENT_HUD (screenblocks == 14 || screenblocks == 16) // [crispy] determine if translucent hud is selected
 /*
 ==============================================================================
 
@@ -513,6 +514,7 @@ extern void R_InitColormaps(void);
 #ifdef CRISPY_TRUECOLOR
 extern void R_SetUnderwaterPalette(byte *palette);
 #endif
+extern int R_GetPatchHeight(int texture_num, int patch_index);
 
 //
 // R_things.c
@@ -594,5 +596,8 @@ void R_DrawSpanLow(void);
 
 void R_InitBuffer(int width, int height);
 void R_InitTranslationTables(void);
+
+extern void (*V_DrawSBPatch)(int x, int y, patch_t *patch); // [crispy] for conditional drawing of status bar elements
+void SB_Translucent(boolean translucent); // [crispy] on/off status bar translucency
 
 #endif // __R_LOCAL__

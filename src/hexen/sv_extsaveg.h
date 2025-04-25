@@ -1,7 +1,8 @@
 //
 // Copyright(C) 1993-1996 Id Software, Inc.
+// Copyright(C) 1993-2008 Raven Software
 // Copyright(C) 2005-2014 Simon Howard
-// Copyright(C) 2021 Fabian Greffrath
+// Copyright(C) 2016 Fabian Greffrath
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -14,21 +15,20 @@
 // GNU General Public License for more details.
 //
 // DESCRIPTION:
-//	Accessibility specific variables.
+//	[crispy] Archiving: Extended SaveGame I/O.
 //
 
+#ifndef __SV_EXTSAVEG__
+#define __SV_EXTSAVEG__
 
-#ifndef __A11Y_H__
-#define __A11Y_H__
+typedef enum
+{
+    EXTSAVEG_MAP = 1,
+    EXTSAVEG_GAME,
+    EXTSAVEG_BOTH // for checks only
+} savetarget_t;
 
-extern int a11y_sector_lighting;
-extern int a11y_extra_lighting;
-extern int a11y_weapon_flash;
-extern int a11y_weapon_pspr;
-extern int a11y_weapon_palette;
-extern int a11y_palette_changes;
-extern int a11y_invul_colormap;
+extern void SV_WriteExtendedSaveGameData (savetarget_t location);
+extern void SV_ReadExtendedSaveGameData (savetarget_t location);
 
-// [crispy] A11Y number of player sprites to draw
-extern int numrpsprites;
 #endif

@@ -26,7 +26,7 @@
 #include "v_video.h"
 #include "a11y.h"
 
-static FILE *SaveGameFP;
+FILE *SaveGameFP;
 
 int vanilla_savegame_limit = 1;
 
@@ -78,11 +78,11 @@ void SV_OpenRead(char *filename)
 
 //==========================================================================
 //
-// SV_Close
+// SV_WriteSaveGameEOF
 //
 //==========================================================================
 
-void SV_Close(char *fileName)
+void SV_WriteSaveGameEOF(void)
 {
     SV_WriteByte(SAVE_GAME_TERMINATOR);
 
@@ -92,8 +92,21 @@ void SV_Close(char *fileName)
     {
         I_Error("Savegame buffer overrun");
     }
+}
 
-    fclose(SaveGameFP);
+//==========================================================================
+//
+// SV_Close
+//
+//==========================================================================
+
+void SV_Close(void)
+{
+    if (SaveGameFP)
+    {
+        fclose(SaveGameFP);
+        SaveGameFP = NULL;
+    }
 }
 
 //==========================================================================
