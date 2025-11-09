@@ -128,7 +128,7 @@ void DrawMessage(void)
     player_t *player;
 
     player = &players[consoleplayer];
-    if (player->messageTics <= 0 || !player->message)
+    if (player->messageTics <= 0 || !player->message || crispy->screenshot)
     {                           // No message
         return;
     }
@@ -289,6 +289,15 @@ void D_Display(void)
             {
                 AM_Drawer();
                 BorderNeedRefresh = true;
+            }
+            // [crispy] don't draw any GUI elements when taking a clean screenshot
+            if (crispy->screenshot == 2)
+            {
+                if (automapactive && !crispy->automapoverlay)
+                    SB_Drawer();                    
+                UpdateState |= I_FULLVIEW;
+                I_FinishUpdate();
+                return;
             }
             // [crispy] check for translucent HUD
             SB_Translucent(TRANSLUCENT_HUD && (!automapactive || crispy->automapoverlay));
