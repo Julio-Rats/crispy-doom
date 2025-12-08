@@ -2619,7 +2619,7 @@ static default_t extra_defaults_list[] =
     CONFIG_VARIABLE_INT(crispy_statsformat),
 
     //!
-    // @game doom heretic hexen
+    // @game doom heretic hexen strife
     //
     // Enable translucency.
     //
