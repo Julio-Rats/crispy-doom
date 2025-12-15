@@ -512,6 +512,10 @@ void D_BindVariables(void)
     M_BindIntVariable("screensize",             &screenblocks);
     M_BindIntVariable("snd_channels",           &snd_channels);
     M_BindIntVariable("a11y_sector_lighting",   &a11y_sector_lighting); // [crispy]
+    M_BindIntVariable("a11y_extra_lighting",    &a11y_extra_lighting); // [crispy]
+    M_BindIntVariable("a11y_weapon_flash",      &a11y_weapon_flash); // [crispy]
+    M_BindIntVariable("a11y_palette_changes",   &a11y_palette_changes); // [crispy]
+    M_BindIntVariable("a11y_weapon_palette",    &a11y_weapon_palette); // [crispy]
     M_BindIntVariable("vanilla_savegame_limit", &vanilla_savegame_limit);
     M_BindIntVariable("vanilla_demo_limit",     &vanilla_demo_limit);
     M_BindIntVariable("show_endoom",            &show_endoom);
@@ -1568,7 +1572,8 @@ void D_IntroTick(void)
         // that without this one-time limitation, the sound is far too loud.
         if(!didsound)
         {
-            S_StartSound(NULL, sfx_psdtha);
+            if (graphical_startup) // [crispy]
+                S_StartSound(NULL, sfx_psdtha);
             didsound = true;
         }
     }
