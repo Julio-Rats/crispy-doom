@@ -47,6 +47,7 @@
 
 #include "v_video.h" // [crispy] V_DrawPatch() et al.
 #include "v_trans.h" // [crispy] color translation and color string tables
+#include "r_local.h" // [crispy] translucent HUD
 
 //
 // Locally used constants, shortcuts.
@@ -314,6 +315,12 @@ void HU_Start(void)
 // [crispy] crosshair color determined by health
 static byte *R_CrosshairColor (void)
 {
+    if (TRANSLUCENT_HUD)
+    {
+        // [crispy] only dimming, no colorization
+        return cr[CR_DIMMED];
+    }
+    else
     if (crispy->crosshairhealth)
     {
         const int health = players[consoleplayer].health;
