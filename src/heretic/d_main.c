@@ -1141,10 +1141,10 @@ void D_DoomMain(void)
     //!
     // @category game
     //
-    // Automatic wand start when advancing from one level to the next. At the
+    // Automatic wand start when advancing from one level to the next.  At the
     // beginning of each level, the player's health is reset to 100, their
     // armor to 0 and their inventory is reduced to the following: wand, staff
-    // and 50 ammo for the wand. This option is not allowed when recording a
+    // and 50 ammo for the wand.  This option is not allowed when recording a
     // demo, playing back a demo or when starting a network game.
     //
 
@@ -1153,7 +1153,7 @@ void D_DoomMain(void)
     //!
     // @category game
     //
-    // Ammo pickups give 50% more ammo. This option is not allowed when recording a
+    // Ammo pickups give 50% more ammo.  This option is not allowed when recording a
     // demo, playing back a demo or when starting a network game.
     //
 
@@ -1162,7 +1162,7 @@ void D_DoomMain(void)
     //!
     // @category game
     //
-    // Fast monsters. This option is not allowed when recording a demo,
+    // Fast monsters.  This option is not allowed when recording a demo,
     // playing back a demo or when starting a network game.
     //
 

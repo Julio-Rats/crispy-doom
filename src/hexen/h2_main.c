@@ -559,8 +559,9 @@ void D_DoomMain(void)
     //!
     // @category game
     //
-    // Mana pickups give 50% more mana. This option is not allowed when recording a
-    // demo, playing back a demo or when starting a network game.
+    // Mana pickups give 50% more mana.  This option is not allowed when
+    // recording a demo, playing back a demo or when starting a network
+    // game.
     //
 
     crispy->moreammo = M_ParmExists("-moremana");
@@ -568,7 +569,7 @@ void D_DoomMain(void)
     //!
     // @category game
     //
-    // Fast monsters. This option is not allowed when recording a demo,
+    // Fast monsters.  This option is not allowed when recording a demo,
     // playing back a demo or when starting a network game.
     //
 
