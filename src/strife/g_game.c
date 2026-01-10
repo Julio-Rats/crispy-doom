@@ -131,6 +131,7 @@ int             levelstarttic;          // gametic at level start
 int             totalkills, /*totalitems,*/ totalsecret;    // for intermission 
  
 char           *demoname;
+static const char *orig_demoname = NULL; // [crispy] the name originally chosen for the demo, i.e. without "-00000"
 boolean         demorecording; 
 boolean         longtics;               // cph's doom 1.91 longtics hack
 boolean         lowres_turn;            // low resolution turning for longtics
@@ -1081,6 +1082,14 @@ static void SetMouseButtons(unsigned int buttons_mask)
 // 
 boolean G_Responder (event_t* ev) 
 { 
+    // [crispy] demo fast-forward
+    if (ev->type == ev_keydown && ev->data1 == key_demospeed && 
+        (demoplayback || gamestate == GS_DEMOSCREEN))
+    {
+        singletics = !singletics;
+        return true;
+    }
+
     // allow spy mode changes even during the demo
     if (gamestate == GS_LEVEL && ev->type == ev_keydown 
         && ev->data1 == key_spy && (singledemo || !gameskill) ) // [STRIFE]: o_O
@@ -2285,6 +2294,19 @@ void G_DeferedInitNew(skill_t skill, int map)
     d_skill = skill; 
     d_map = map; 
     gameaction = ga_newgame; 
+
+    // [crispy] if a new game is started during demo recording, start a new demo
+    if (demorecording)
+    {
+        G_CheckDemoStatus();
+        Z_Free(demoname);
+        G_RecordDemo(orig_demoname);
+
+        // [crispy] update required for recording e. g. when gotonextlevel was used
+        gamemap = d_map;
+
+        G_BeginRecording();
+    }
 } 
 
 //
@@ -2299,6 +2321,8 @@ void G_DoNewGame (void)
     netdemo = false;
     netgame = false;
     deathmatch = false;
+    // [crispy] reset game speed after demo fast-forward
+    singletics = false;
     playeringame[1] = playeringame[2] = playeringame[3] = 0;
     respawnparm = false;
     fastparm = false;
@@ -2584,11 +2608,28 @@ void G_RecordDemo (const char* name)
     int             i;
     int             maxsize;
 
+    // [crispy] demo file name suffix counter
+    static unsigned int j = 0;
+    FILE *fp = NULL;
+
+    // [crispy] the name originally chosen for the demo, i.e. without "-00000"
+    if (!orig_demoname)
+    {
+        orig_demoname = name;
+    }
+
     usergame = false;
-    demoname_size = strlen(name) + 5;
+    demoname_size = strlen(name) + 5 + 6; // [crispy] + 6 for "-00000"
     demoname = Z_Malloc(demoname_size, PU_STATIC, NULL);
     M_snprintf(demoname, demoname_size, "%s.lmp", name);
     maxsize = 0x20000;
+
+    // [crispy] prevent overriding demos by adding a file name suffix
+    for ( ; j <= 99999 && (fp = fopen(demoname, "rb")) != NULL; j++)
+    {
+        M_snprintf(demoname, demoname_size, "%s-%05d.lmp", name, j);
+        fclose (fp);
+    }
 
     //!
     // @arg <size>
@@ -2853,7 +2894,15 @@ boolean G_CheckDemoStatus (void)
         M_WriteFile (demoname, demobuffer, demo_p - demobuffer); 
         Z_Free (demobuffer); 
         demorecording = false; 
-        I_Error ("Demo %s recorded", demoname); 
+        // [crispy] if a new game is started during demo recording, start a new demo
+        if (gameaction != ga_newgame)
+        {
+            I_Error("Demo %s recorded", demoname);
+        }
+        else
+        {
+            fprintf(stderr, "Demo %s recorded\n", demoname);
+        }
     } 
 
     return false; 

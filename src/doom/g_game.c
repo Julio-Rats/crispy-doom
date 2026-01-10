@@ -2710,6 +2710,11 @@ G_DeferedInitNew
 	Z_Free(demoname);
 
 	G_RecordDemo(orig_demoname);
+
+	// [crispy] update required for recording e. g. when gotonextlevel was used
+	gamemap = d_map;
+	gameepisode = d_episode;
+
 	G_BeginRecording();
     }
 } 

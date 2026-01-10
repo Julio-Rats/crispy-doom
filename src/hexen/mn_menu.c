@@ -593,6 +593,42 @@ static const char *GammaText[] = {
 
 // CODE --------------------------------------------------------------------
 
+static int G_ReloadLevel(void)
+{
+    int result = false;
+
+    if (gamestate == GS_LEVEL)
+    {
+        // [crispy] restart demos from the map they were started
+        if (demorecording)
+        {
+        gamemap = startmap;
+        gameepisode = startepisode;
+        }
+        G_DeferedInitNew(gameskill, gameepisode, gamemap);
+        result = true;
+    }
+
+    return result;
+}
+
+static int G_GotoNextLevel(void)
+{
+    int changed = false;
+
+    if (gamestate == GS_LEVEL)
+    {
+        int map;
+
+        map = P_TranslateMap(P_GetMapNextMap(gamemap));
+
+        G_DeferedInitNew(gameskill, gameepisode, map);
+        changed = true;
+    }
+
+    return changed;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC MN_Init
@@ -2491,6 +2527,16 @@ boolean MN_Responder(event_t * event)
             }
             G_DeferedInitNew(gameskill, gameepisode, gamemap);
             P_SetMessage(&players[consoleplayer], TXT_CHEATWARP, false);
+            return true;
+        }
+        else if (!netgame && key != 0 && key == key_menu_reloadlevel)
+        {
+            G_ReloadLevel();
+            return true;
+        }
+        else if (!netgame && key != 0 && key == key_menu_nextlevel)
+        {
+            G_GotoNextLevel();
             return true;
         }
     }
